@@ -44,7 +44,7 @@ const registerCtrl = async (req, res) => {
   const { token } = await createAccessToken({ id: newUser.id });
   newUser.update({ ...newUser, confirmToken: token });
 
-  //generateRefreshToken({ id: newUser.id, email: newUser.email }, res);
+  generateRefreshToken({ id: newUser.id, email: newUser.email }, res);
 
   mailer.sendEmail(email, username, token);
 
