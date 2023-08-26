@@ -26,7 +26,7 @@ const registerCtrl = async (req, res) => {
       id: rolId,
     },
   });
-  if (roles.length === 0) throw new ClientError("Sin roles", 400);
+  if (roles.length === 0) throw new ClientError("Servicio no activo", 400);
 
   const newUser = await User.create({
     username,
@@ -44,7 +44,7 @@ const registerCtrl = async (req, res) => {
   const { token } = await createAccessToken({ id: newUser.id });
   newUser.update({ ...newUser, confirmToken: token });
 
-  generateRefreshToken({ id: newUser.id, email: newUser.email }, res);
+  //generateRefreshToken({ id: newUser.id, email: newUser.email }, res);
 
   mailer.sendEmail(email, username, token);
 
@@ -57,7 +57,14 @@ const confirmCtrl = async (req, res) => {
   const { token } = req.params;
   const user = await userServices.getUserToken(token);
 
-  if (user.confirmAccount) return res.json({ error: false, status: 200, message: "La cuenta ya está confirmada" });
+  if(!user) throw new ClientError("Sesión expirada",401)
+
+  if (user.confirmAccount)
+    return res.json({
+      error: false,
+      status: 200,
+      message: "La cuenta ya está confirmada",
+    });
 
   user.update({ ...user, confirmAccount: true });
 
@@ -73,7 +80,8 @@ const loginCtrl = async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ClientError("Credenciales invalidas.", 400);
 
-  if(!user.confirmAccount) throw new ClientError("La cuenta no está confirmada", 400);
+  if (!user.confirmAccount)
+    throw new ClientError("La cuenta no está confirmada", 400);
 
   const { token } = await createAccessToken({ id: user.id });
   generateRefreshToken({ id: user.id, email: user.email }, res);

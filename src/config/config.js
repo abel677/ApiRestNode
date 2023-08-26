@@ -12,4 +12,5 @@ export const DB_CONNECTION = process.env.DB_CONNECTION || 'mysql';
 
 export const TOKEN_SECRET = process.env.TOKEN_SECRET || 'abel-ito-andrade';
 export const REFRESH_TOKEN = process.env.REFRESH_TOKEN || 'abel-ito-andrade-mejia';
+export const EMAIL_SECRET = process.env.EMAIL_SECRET;
 export const MODE = process.env.MODE || 'DEVELOPER';
