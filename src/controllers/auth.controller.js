@@ -66,7 +66,7 @@ const confirmCtrl = async (req, res) => {
       message: "La cuenta ya está confirmada",
     });
 
-  user.update({ ...user, confirmAccount: true });
+  user.update({ ...user, confirmAccount: true, confirmToken: null });
 
   return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
 };
@@ -95,6 +95,8 @@ const logoutCtrl = (req, res) => {
   });
   res.sendStatus(200);
 };
+
+
 
 const refreshToken = async (req, res) => {
   try {

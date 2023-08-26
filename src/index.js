@@ -7,7 +7,7 @@ const _PORT = PORT || 3000;
 const main = async () => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ force: false });
     console.log(">> Base de datos conectada <<");
     app.listen(_PORT, () => {
       console.log(`>> Servidor corriendo en el puerto [${_PORT}] <<`);

@@ -21,11 +21,11 @@ const sendEmail = async (email, user, token) => {
   try {
     const transporter = createTrans();
     const info = await transporter.sendMail({
-      from: "jabel.system@gmail.com",
+      from: "Notificación ABEL SYSTEM S.A <jabel.system@gmail.com>",
       to: email,
       subject: "Confirma tu cuenta en Abel App",
       html: `
-        <h1>Hola ${user} </h1>
+        <h1>Hola ${user}, bienvenido a Abel System App</h1>
         <p>Para verificar tu cuenta ingresa en el siguiente enlace: </p>
         <a href="http://localhost:5000/api/auth/confirm/${token}"><b>Click aquí</b></a>
       `,

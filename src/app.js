@@ -4,8 +4,7 @@ import cors from "cors";
 
 import cookieParser from "cookie-parser";
 import { syncErrorHandler } from "./middleware/apiErrorHandler.js";
-import { authRoute, welcomeRoute } from "./routes/index.routes.js";
-import path from "path";
+import { authRoute, welcomeRoute, userRoute } from "./routes/index.routes.js";
 
 const app = express();
 
@@ -16,6 +15,7 @@ app.use(cors());
 
 app.use("/api", welcomeRoute);
 app.use("/api", authRoute);
+app.use("/api", userRoute);
 
 app.use(syncErrorHandler);
 
