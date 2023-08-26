@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "concurrently \"node src/seed.js\" \"node src/index.js\"",
+    
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "seed": "node src/seed.js"
   },
