@@ -4,13 +4,13 @@ import { EMAIL_SECRET } from "../config/config.js";
 
 const createTrans = () => {
   const transport = nodemailer.createTransport({
-    host: "smtp.sendgrid.net",
+    host: "smtp.gmail.com",
     port: 587,
     tls: {
       rejectUnauthorized: false,
     },
     auth: {
-      user: "apikey",
+      user: "jabel.system@gmail.com",
       pass: EMAIL_SECRET,
     },
   });
