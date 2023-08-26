@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-
 import { createAccessToken, generateRefreshToken } from "../libs/jwt.js";
 import { REFRESH_TOKEN } from "../config/config.js";
 
@@ -57,7 +56,7 @@ const confirmCtrl = async (req, res) => {
   const { token } = req.params;
   const user = await userServices.getUserToken(token);
 
-  if(!user) throw new ClientError("Sesión expirada",401)
+  if (!user) throw new ClientError("Sesión expirada", 401);
 
   if (user.confirmAccount)
     return res.json({
@@ -68,8 +67,8 @@ const confirmCtrl = async (req, res) => {
 
   user.update({ ...user, confirmAccount: true, confirmToken: null });
 
-  res.redirect("http://localhost:3000/auth/login")
-  //return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
+  //res.redirect("http://localhost:3000/auth/login")
+  return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
 };
 
 const loginCtrl = async (req, res) => {
@@ -96,8 +95,6 @@ const logoutCtrl = (req, res) => {
   });
   res.sendStatus(200);
 };
-
-
 
 const refreshToken = async (req, res) => {
   try {
