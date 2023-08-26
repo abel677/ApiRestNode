@@ -1,81 +1,94 @@
-import { Op } from "sequelize";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 
-import { User } from "../models/user.model.js";
 import { createAccessToken, generateRefreshToken } from "../libs/jwt.js";
 import { REFRESH_TOKEN } from "../config/config.js";
 
-import { asyncErrorHandler } from "../middleware/apiErrorHandler.js";
-import { ClientError, ClientResponse } from "../utils/responseApi.js";
+import { userServices } from "../services/userServices.js";
+import { ClientError } from "../utils/responseApi.js";
+import { handleBcrypt } from "../helpers/handleBcrypt.js";
+import { User } from "../models/user.model.js";
+import { UserRole } from "../models/userRole.js";
+import { Rol } from "../models/roles.model.js";
+import { mailer } from "../helpers/mailer.js";
 
+const registerCtrl = async (req, res) => {
+  const { username, email, password } = req.body;
+  const { rolId } = req.body;
 
-export const loginController = asyncErrorHandler( async (req, res) => {
+  const user = await userServices.getUserEmail(email);
+  if (user) throw new ClientError("Usuario ya existe", 401);
+
+  const passwordHash = await handleBcrypt.encrypt(password);
+  const roles = await Rol.findAll({
+    where: {
+      id: rolId,
+    },
+  });
+  if (roles.length === 0) throw new ClientError("Sin roles", 400);
+
+  const newUser = await User.create({
+    username,
+    email,
+    password: passwordHash,
+  });
+
+  roles.forEach(async (rol) => {
+    const relation = await UserRole.create({
+      userId: newUser.id,
+      rolId: rol.id,
+    });
+  });
+
+  const { token } = await createAccessToken({ id: newUser.id });
+  newUser.update({ ...newUser, confirmToken: token });
+
+  generateRefreshToken({ id: newUser.id, email: newUser.email }, res);
+
+  mailer.sendEmail(email, username, token);
+
+  return res
+    .status(200)
+    .json({ error: false, status: 200, message: "Usuario registrado" });
+};
+
+const confirmCtrl = async (req, res) => {
+  const { token } = req.params;
+  const user = await userServices.getUserToken(token);
+
+  if (user.confirmAccount) return res.json({ error: false, status: 200, message: "La cuenta ya está confirmada" });
+
+  user.update({ ...user, confirmAccount: true });
+
+  return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
+};
+
+const loginCtrl = async (req, res) => {
   const { email, password } = req.body;
 
-  const userFound = await User.findOne({
-    where: { email },
-  });
+  const user = await userServices.getUserEmail(email);
+  if (!user) throw new ClientError("Credenciales invalidas.", 400);
 
-  if (!userFound) throw new ClientError("Credenciales invalidas.", 400);
-
-  const isMatch = await bcrypt.compare(password, userFound.password);
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ClientError("Credenciales invalidas.", 400);
 
-  const { token } = await createAccessToken({
-    id: userFound.id,
-    name: userFound.username,
-    email: userFound.email,
-  });
-  
-  generateRefreshToken({ id: userFound.id, email: userFound.email }, res);
+  if(!user.confirmAccount) throw new ClientError("La cuenta no está confirmada", 400);
 
-  res.status(200).json(ClientResponse(res, 200, { token }));
-});
+  const { token } = await createAccessToken({ id: user.id });
+  generateRefreshToken({ id: user.id, email: user.email }, res);
 
+  return res.json({ error: false, status: 200, token: token });
+};
 
-export const registerController = asyncErrorHandler( async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    const passwordHash = await bcrypt.hash(password, 10);
-    const userFound = await User.findOne({
-      where: {
-        [Op.or]: [{ username }, { email }],
-      },
-    });
-    if (userFound)
-      return res.status(404).json({ response: "El usuario ya existe." });
-    
-    const newUser = await User.create({
-      username,
-      email,
-      password: passwordHash,
-    });
-    const userSave = await newUser.save();
-    const token = await createAccessToken({ id: userSave.id });
-    res.cookie("token", token);
-    res.status(200).json({
-      id: userSave.id,
-      username: userSave.username,
-      email: userSave.email,
-      createdAt: userSave.createdAt,
-      updatedAt: userSave.updatedAt,
-    });
-  } catch (error) {
-    res.status(500).json({ response: error.message });
-  }
-});
-
-
-export const logoutController = (req, res) => {
+const logoutCtrl = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(),
   });
   res.sendStatus(200);
 };
 
-
-export const refreshToken = async (req, res) => {
+const refreshToken = async (req, res) => {
   try {
     const expiresIn = 60 * 15;
     const token = req.cookies.refreshToken;
@@ -89,17 +102,10 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-
-export const profileController = asyncErrorHandler(async (req, res) => {
-  const userFound = await User.findOne({ where: { id: req.user.id } });
-  if (!userFound) throw new ClientError("Credenciales invalidas.", 400);
-  const user = {
-    id: userFound.id,
-    username: userFound.username,
-    email: userFound.email,
-    state: userFound.state,
-    createdAt: userFound.createdAt,
-    updatedAt: userFound.updatedAt,
-  };
-  res.status(200).json(ClientResponse(res, 200, user));
-});
+export const autCtrl = {
+  registerCtrl,
+  confirmCtrl,
+  loginCtrl,
+  logoutCtrl,
+  refreshToken,
+};
