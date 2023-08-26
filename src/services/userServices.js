@@ -1,4 +1,4 @@
-import { Rol } from "../models/roles.model.js";
+import { Rol } from "../models/rol.model.js";
 import { User } from "../models/user.model.js";
 
 const getUserEmail = async (email) => {

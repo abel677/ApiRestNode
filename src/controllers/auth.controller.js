@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Op } from "sequelize";
+
 
 import { createAccessToken, generateRefreshToken } from "../libs/jwt.js";
 import { REFRESH_TOKEN } from "../config/config.js";
@@ -10,7 +10,7 @@ import { ClientError } from "../utils/responseApi.js";
 import { handleBcrypt } from "../helpers/handleBcrypt.js";
 import { User } from "../models/user.model.js";
 import { UserRole } from "../models/userRole.js";
-import { Rol } from "../models/roles.model.js";
+import { Rol } from "../models/rol.model.js";
 import { mailer } from "../helpers/mailer.js";
 
 const registerCtrl = async (req, res) => {
@@ -68,7 +68,8 @@ const confirmCtrl = async (req, res) => {
 
   user.update({ ...user, confirmAccount: true, confirmToken: null });
 
-  return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
+  res.redirect("http://localhost:3000/auth/login")
+  //return res.json({ error: false, status: 200, message: "Cuenta confirmada" });
 };
 
 const loginCtrl = async (req, res) => {
